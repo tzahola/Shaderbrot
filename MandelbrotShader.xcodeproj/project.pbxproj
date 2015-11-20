@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6752E4B91BFFC8B40098DF3D /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6752E4B81BFFC8B40098DF3D /* Launch Screen.storyboard */; };
 		E28952D418771D4A00291782 /* icon29pt@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = E28952D118771D4A00291782 /* icon29pt@2x.png */; };
 		E28952D518771D4A00291782 /* icon40pt@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = E28952D218771D4A00291782 /* icon40pt@2x.png */; };
 		E28952D618771D4A00291782 /* icon60pt@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = E28952D318771D4A00291782 /* icon60pt@2x.png */; };
@@ -53,6 +54,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		6752E4B81BFFC8B40098DF3D /* Launch Screen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
 		E28952D118771D4A00291782 /* icon29pt@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon29pt@2x.png"; sourceTree = "<group>"; };
 		E28952D218771D4A00291782 /* icon40pt@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon40pt@2x.png"; sourceTree = "<group>"; };
 		E28952D318771D4A00291782 /* icon60pt@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon60pt@2x.png"; sourceTree = "<group>"; };
@@ -190,6 +192,7 @@
 				E2E4622B1875ADD200CA2DB3 /* ShaderHelper.m */,
 				E2E4622D1875B57F00CA2DB3 /* GLKHelper.h */,
 				E2E4622E1875B57F00CA2DB3 /* GLKHelper.m */,
+				6752E4B81BFFC8B40098DF3D /* Launch Screen.storyboard */,
 			);
 			path = MandelbrotShader;
 			sourceTree = "<group>";
@@ -267,11 +270,11 @@
 		E2AFD6861874814300B04D8C /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0500;
+				LastUpgradeCheck = 0710;
 				ORGANIZATIONNAME = "Tamás Zahola";
 				TargetAttributes = {
 					E2AFD68D1874814300B04D8C = {
-						DevelopmentTeam = 7Z38YLV73G;
+						DevelopmentTeam = G3FPFFW4NC;
 					};
 					E2AFD6B61874814300B04D8C = {
 						TestTargetID = E2AFD68D1874814300B04D8C;
@@ -310,6 +313,7 @@
 				E28952E6187720EC00291782 /* icon57pt@2x.png in Resources */,
 				E28952EA1877214700291782 /* icon40pt.png in Resources */,
 				E28952D418771D4A00291782 /* icon29pt@2x.png in Resources */,
+				6752E4B91BFFC8B40098DF3D /* Launch Screen.storyboard in Resources */,
 				E28952E5187720EC00291782 /* icon72pt.png in Resources */,
 				E28952E2187720EC00291782 /* icon50pt@2x.png in Resources */,
 				E28952E7187720EC00291782 /* icon57pt.png in Resources */,
@@ -388,7 +392,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
@@ -403,6 +406,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
+				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -427,7 +431,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
@@ -466,6 +469,7 @@
 				GCC_PREFIX_HEADER = "MandelbrotShader/MandelbrotShader-Prefix.pch";
 				INFOPLIST_FILE = "MandelbrotShader/MandelbrotShader-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.zahola.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
@@ -482,6 +486,7 @@
 				GCC_PREFIX_HEADER = "MandelbrotShader/MandelbrotShader-Prefix.pch";
 				INFOPLIST_FILE = "MandelbrotShader/MandelbrotShader-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.zahola.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
@@ -491,7 +496,6 @@
 		E2AFD6CC1874814400B04D8C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
 				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/MandelbrotShader.app/MandelbrotShader";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
@@ -505,6 +509,7 @@
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = "MandelbrotShaderTests/MandelbrotShaderTests-Info.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.zahola.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUNDLE_LOADER)";
 				WRAPPER_EXTENSION = xctest;
@@ -514,7 +519,6 @@
 		E2AFD6CD1874814400B04D8C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
 				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/MandelbrotShader.app/MandelbrotShader";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
@@ -524,6 +528,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "MandelbrotShader/MandelbrotShader-Prefix.pch";
 				INFOPLIST_FILE = "MandelbrotShaderTests/MandelbrotShaderTests-Info.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.zahola.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUNDLE_LOADER)";
 				WRAPPER_EXTENSION = xctest;
