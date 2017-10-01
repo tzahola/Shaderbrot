@@ -54,7 +54,7 @@ GLfloat vertexData[] =
     
     EAGLContext * _context;
     
-    GLKMatrix3 screenToComplexPlaneTransform;
+    GLKMatrix3 _viewToComplexPlaneTransform;
     GLKVector2 _juliaSeed;
     
     UIPanGestureRecognizer * _panGestureRecognizer;
@@ -64,6 +64,10 @@ GLfloat vertexData[] =
     
     State _state;
     uint _limit;
+    
+    __weak IBOutlet UILabel *_maxIterationsLabel;
+    __weak IBOutlet UISlider *_maxIterationsSlider;
+    __weak IBOutlet UIView* _gestureAreaView;
 }
 
 - (void)viewDidLoad
@@ -80,38 +84,39 @@ GLfloat vertexData[] =
     GLKView *view = (GLKView *)self.view;
     view.context = _context;
     view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
-    view.contentScaleFactor = [self determineContentScaleFactor];
+    view.contentScaleFactor = UIScreen.mainScreen.nativeScale;
     
-    self.preferredFramesPerSecond = 30;
+    self.preferredFramesPerSecond = 60;
     _limit = 128;
     
     _panGestureRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(didPan:)];
     _panGestureRecognizer.delegate = self;
-    [view addGestureRecognizer:_panGestureRecognizer];
+    [_gestureAreaView addGestureRecognizer:_panGestureRecognizer];
     
     _pinchGestureRecognizer = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(didPinch:)];
     _pinchGestureRecognizer.delegate = self;
-    [view addGestureRecognizer:_pinchGestureRecognizer];
+    [_gestureAreaView addGestureRecognizer:_pinchGestureRecognizer];
     
     _rotationGestureRecognizer = [[UIRotationGestureRecognizer alloc] initWithTarget:self action:@selector(didRotate:)];
     _rotationGestureRecognizer.delegate = self;
-    [view addGestureRecognizer:_rotationGestureRecognizer];
+    [_gestureAreaView addGestureRecognizer:_rotationGestureRecognizer];
     
     _doubleTapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didDoubleTap:)];
     _doubleTapGestureRecognizer.numberOfTapsRequired = 2;
     _doubleTapGestureRecognizer.delegate = self;
-    [view addGestureRecognizer:_doubleTapGestureRecognizer];
+    [_gestureAreaView addGestureRecognizer:_doubleTapGestureRecognizer];
     
     [self setupGL];
 }
 
--(CGFloat)determineContentScaleFactor{
-    CGSize screenSize = [[UIScreen mainScreen] bounds].size;
-    if(screenSize.width * screenSize.height <= 960 * 640){
-        return 2;
-    }else{
-        return 1;
-    }
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [self refreshMaxIterations];
+}
+
+- (void)refreshMaxIterations {
+    _maxIterationsLabel.text = [NSString stringWithFormat:@"%d", (int)_limit];
+    _maxIterationsSlider.value = _limit;
 }
 
 -(BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer{
@@ -124,7 +129,7 @@ GLfloat vertexData[] =
         
         CGPoint position = [_doubleTapGestureRecognizer locationInView:self.view];
         GLKVector3 positionVector = GLKVector3Make(position.x * self.view.contentScaleFactor, (self.view.bounds.size.height - position.y) * self.view.contentScaleFactor, 1);
-        GLKVector3 juliaSeed = GLKMatrix3MultiplyVector3(screenToComplexPlaneTransform, positionVector);
+        GLKVector3 juliaSeed = GLKMatrix3MultiplyVector3(_viewToComplexPlaneTransform, positionVector);
         _juliaSeed = GLKVector2Make(juliaSeed.x, juliaSeed.y);
         
         _state = kJuliaState;
@@ -152,9 +157,9 @@ GLfloat vertexData[] =
             break;
     }
     
-    screenToComplexPlaneTransform = GLKMatrix3Translate(screenToComplexPlaneTransform, rotationCenter.x * self.view.contentScaleFactor, (self.view.bounds.size.height - rotationCenter.y) * self.view.contentScaleFactor);
-    screenToComplexPlaneTransform = GLKMatrix3RotateZ(screenToComplexPlaneTransform, deltaRotation);
-    screenToComplexPlaneTransform = GLKMatrix3Translate(screenToComplexPlaneTransform, -rotationCenter.x * self.view.contentScaleFactor, -(self.view.bounds.size.height - rotationCenter.y) * self.view.contentScaleFactor);
+    _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, rotationCenter.x * self.view.contentScaleFactor, (self.view.bounds.size.height - rotationCenter.y) * self.view.contentScaleFactor);
+    _viewToComplexPlaneTransform = GLKMatrix3RotateZ(_viewToComplexPlaneTransform, deltaRotation);
+    _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, -rotationCenter.x * self.view.contentScaleFactor, -(self.view.bounds.size.height - rotationCenter.y) * self.view.contentScaleFactor);
     
     previousRotation = rotation;
 }
@@ -178,9 +183,9 @@ GLfloat vertexData[] =
             break;
     }
     
-    screenToComplexPlaneTransform = GLKMatrix3Translate(screenToComplexPlaneTransform, scaleCenter.x * self.view.contentScaleFactor, (self.view.bounds.size.height - scaleCenter.y) * self.view.contentScaleFactor);
-    screenToComplexPlaneTransform = GLKMatrix3Scale(screenToComplexPlaneTransform, deltaScale, deltaScale, 1);
-    screenToComplexPlaneTransform = GLKMatrix3Translate(screenToComplexPlaneTransform, -scaleCenter.x * self.view.contentScaleFactor, -(self.view.bounds.size.height - scaleCenter.y) * self.view.contentScaleFactor);
+    _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, scaleCenter.x * self.view.contentScaleFactor, (self.view.bounds.size.height - scaleCenter.y) * self.view.contentScaleFactor);
+    _viewToComplexPlaneTransform = GLKMatrix3Scale(_viewToComplexPlaneTransform, deltaScale, deltaScale, 1);
+    _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, -scaleCenter.x * self.view.contentScaleFactor, -(self.view.bounds.size.height - scaleCenter.y) * self.view.contentScaleFactor);
     
     previousScale = scale;
 }
@@ -201,7 +206,7 @@ GLfloat vertexData[] =
         }
     }
     
-    screenToComplexPlaneTransform = GLKMatrix3Translate(screenToComplexPlaneTransform, -delta.x * self.view.contentScaleFactor, delta.y * self.view.contentScaleFactor);
+    _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, -delta.x * self.view.contentScaleFactor, delta.y * self.view.contentScaleFactor);
     
     previousTranslation = translation;
 }
@@ -240,12 +245,12 @@ GLfloat vertexData[] =
 }
 
 -(void)resetTransformation{
-    screenToComplexPlaneTransform = GLKMatrix3Identity;
-    screenToComplexPlaneTransform = GLKMatrix3Translate(screenToComplexPlaneTransform, -2, 0);
-    screenToComplexPlaneTransform = GLKMatrix3Translate(screenToComplexPlaneTransform, 0, -1);
+    _viewToComplexPlaneTransform = GLKMatrix3Identity;
+    _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, -2, 0);
+    _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, 0, -1);
     
     float scale = 2 / (self.view.bounds.size.height * self.view.contentScaleFactor);
-    screenToComplexPlaneTransform = GLKMatrix3Scale(screenToComplexPlaneTransform, scale, scale, 1);
+    _viewToComplexPlaneTransform = GLKMatrix3Scale(_viewToComplexPlaneTransform, scale, scale, 1);
 }
 
 - (void)tearDownGL
@@ -282,7 +287,7 @@ GLfloat vertexData[] =
 
 -(void)glkViewControllerUpdate:(GLKViewController *)controller{
     glUniform1i(uniforms[UNIFORM_LIMIT], _limit);
-    glUniformMatrix3fv(uniforms[UNIFORM_SCREEN_TO_COMPLEX_PLANE_TRANSFORM], 1, GL_FALSE, screenToComplexPlaneTransform.m);
+    glUniformMatrix3fv(uniforms[UNIFORM_SCREEN_TO_COMPLEX_PLANE_TRANSFORM], 1, GL_FALSE, _viewToComplexPlaneTransform.m);
     glUniform1f(uniforms[UNIFORM_TIME], (float)controller.timeSinceFirstResume);
     if(_state == kJuliaState){
         glUniform2f(uniforms[UNIFORM_JULIA_SEED], _juliaSeed.x, _juliaSeed.y);
@@ -322,6 +327,11 @@ GLfloat vertexData[] =
     uniforms[UNIFORM_TIME] = glGetUniformLocation(_juliaProgram, "time");
     uniforms[UNIFORM_JULIA_SEED] = glGetUniformLocation(_juliaProgram, "juliaSeed");
     uniforms[UNIFORM_LIMIT] = glGetUniformLocation(_juliaProgram, "limit");
+}
+
+- (IBAction)maxIterationsSliderValueChanged:(UISlider*)slider {
+    _limit = (int)slider.value;
+    [self refreshMaxIterations];
 }
 
 @end

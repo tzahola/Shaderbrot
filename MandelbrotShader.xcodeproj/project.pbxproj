@@ -39,6 +39,7 @@
 		E2AFD6C51874814400B04D8C /* MandelbrotShaderTests.m in Sources */ = {isa = PBXBuildFile; fileRef = E2AFD6C41874814400B04D8C /* MandelbrotShaderTests.m */; };
 		E2AFD6CF187485C200B04D8C /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2AFD6CE187485C200B04D8C /* GLKit.framework */; };
 		E2CE822E187603BE00914531 /* JuliaShader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = E2CE822C1876037C00914531 /* JuliaShader.fsh */; };
+		E2E0F3661F812C1F0022722B /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E2E0F3651F812C1F0022722B /* Main.storyboard */; };
 		E2E4622C1875ADD200CA2DB3 /* ShaderHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = E2E4622B1875ADD200CA2DB3 /* ShaderHelper.m */; };
 		E2E4622F1875B57F00CA2DB3 /* GLKHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = E2E4622E1875B57F00CA2DB3 /* GLKHelper.m */; };
 /* End PBXBuildFile section */
@@ -91,6 +92,7 @@
 		E2AFD6C41874814400B04D8C /* MandelbrotShaderTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MandelbrotShaderTests.m; sourceTree = "<group>"; };
 		E2AFD6CE187485C200B04D8C /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
 		E2CE822C1876037C00914531 /* JuliaShader.fsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = JuliaShader.fsh; path = Shaders/JuliaShader.fsh; sourceTree = "<group>"; };
+		E2E0F3651F812C1F0022722B /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
 		E2E4622A1875ADD200CA2DB3 /* ShaderHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ShaderHelper.h; sourceTree = "<group>"; };
 		E2E4622B1875ADD200CA2DB3 /* ShaderHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ShaderHelper.m; sourceTree = "<group>"; };
 		E2E4622D1875B57F00CA2DB3 /* GLKHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLKHelper.h; sourceTree = "<group>"; };
@@ -193,6 +195,7 @@
 				E2E4622D1875B57F00CA2DB3 /* GLKHelper.h */,
 				E2E4622E1875B57F00CA2DB3 /* GLKHelper.m */,
 				6752E4B81BFFC8B40098DF3D /* Launch Screen.storyboard */,
+				E2E0F3651F812C1F0022722B /* Main.storyboard */,
 			);
 			path = MandelbrotShader;
 			sourceTree = "<group>";
@@ -274,7 +277,7 @@
 				ORGANIZATIONNAME = "Tamás Zahola";
 				TargetAttributes = {
 					E2AFD68D1874814300B04D8C = {
-						DevelopmentTeam = G3FPFFW4NC;
+						DevelopmentTeam = 2379DTTDAM;
 					};
 					E2AFD6B61874814300B04D8C = {
 						TestTargetID = E2AFD68D1874814300B04D8C;
@@ -316,6 +319,7 @@
 				6752E4B91BFFC8B40098DF3D /* Launch Screen.storyboard in Resources */,
 				E28952E5187720EC00291782 /* icon72pt.png in Resources */,
 				E28952E2187720EC00291782 /* icon50pt@2x.png in Resources */,
+				E2E0F3661F812C1F0022722B /* Main.storyboard in Resources */,
 				E28952E7187720EC00291782 /* icon57pt.png in Resources */,
 				E2CE822E187603BE00914531 /* JuliaShader.fsh in Resources */,
 				E2AFD6AD1874814300B04D8C /* Shader.vsh in Resources */,
@@ -463,12 +467,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 2379DTTDAM;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "MandelbrotShader/MandelbrotShader-Prefix.pch";
 				INFOPLIST_FILE = "MandelbrotShader/MandelbrotShader-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.zahola.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -480,12 +484,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 2379DTTDAM;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "MandelbrotShader/MandelbrotShader-Prefix.pch";
 				INFOPLIST_FILE = "MandelbrotShader/MandelbrotShader-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.zahola.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = "1,2";
