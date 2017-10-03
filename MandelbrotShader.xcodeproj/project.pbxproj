@@ -182,10 +182,10 @@
 			children = (
 				E28952D018771D4A00291782 /* images */,
 				E2CE822C1876037C00914531 /* JuliaShader.fsh */,
-				E2AFD6A41874814300B04D8C /* AppDelegate.h */,
-				E2AFD6A51874814300B04D8C /* AppDelegate.m */,
 				E2AFD6AA1874814300B04D8C /* MandelbrotShader.fsh */,
 				E2AFD6AC1874814300B04D8C /* Shader.vsh */,
+				E2AFD6A41874814300B04D8C /* AppDelegate.h */,
+				E2AFD6A51874814300B04D8C /* AppDelegate.m */,
 				E2AFD6AE1874814300B04D8C /* ViewController.h */,
 				E2AFD6AF1874814300B04D8C /* ViewController.m */,
 				E2AFD6B11874814300B04D8C /* Images.xcassets */,

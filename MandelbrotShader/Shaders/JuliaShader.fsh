@@ -10,13 +10,13 @@
 #define M_1_LOG_2 1.44269504089
 
 uniform highp vec2 juliaSeed;
-uniform highp mat3 screenToComplexPlaneTransform;
+uniform highp mat4 screenToComplexPlaneTransform;
 uniform highp float time;
 uniform int limit;
 
 void main()
 {
-    highp vec2 z = (screenToComplexPlaneTransform * vec3(gl_FragCoord.xy, 1.)).xy;
+    highp vec2 z = (screenToComplexPlaneTransform * vec4(gl_FragCoord.xy, 0., 1.)).xy;
     
     int i = 0;
     for(;;){

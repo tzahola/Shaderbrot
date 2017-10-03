@@ -15,7 +15,7 @@
         <scene sceneID="FtU-Xl-eHJ">
             <objects>
                 <viewController id="h7h-M6-w3R" customClass="ViewController" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="zQU-6b-RVV" customClass="GLKView">
+                    <view key="view" contentMode="scaleAspectFill" id="zQU-6b-RVV" customClass="GLKView">
                         <rect key="frame" x="0.0" y="0.0" width="667" height="375"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
@@ -23,7 +23,7 @@
                                 <rect key="frame" x="0.0" y="0.0" width="667" height="375"/>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                             </view>
-                            <view opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="KiW-cD-0a3">
+                            <view hidden="YES" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="KiW-cD-0a3">
                                 <rect key="frame" x="0.0" y="375" width="667" height="150"/>
                                 <subviews>
                                     <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="SWt-CT-4lG">
@@ -167,6 +167,7 @@
                         <outlet property="_maxIterationsSlider" destination="Hpz-m7-Su9" id="QgL-3I-CLN"/>
                         <outlet property="_modeSegmentedControl" destination="dzQ-Gg-SYS" id="UwS-Lr-eUK"/>
                         <outlet property="_settingsPanelHiddenConstraint" destination="qfy-Kg-XK2" id="26P-q9-JOL"/>
+                        <outlet property="_settingsPanelView" destination="KiW-cD-0a3" id="FBf-RD-Uy5"/>
                         <outlet property="_settingsPanelVisibleConstraint" destination="fKv-MZ-7WT" id="9aJ-c6-7se"/>
                     </connections>
                 </viewController>

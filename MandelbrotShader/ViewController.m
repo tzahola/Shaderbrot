@@ -43,6 +43,11 @@ GLfloat vertexData[] =
     -1,  1, 0, 1,
 };
 
+@interface ViewController ()
+@property (nonatomic, readonly) GLKView* glView;
+@property (nonatomic) BOOL settingsPanelHidden;
+@end
+
 @implementation ViewController {
     int _mandelbrotUniforms[NUM_UNIFORMS];
     GLuint _mandelbrotProgram;
@@ -55,7 +60,7 @@ GLfloat vertexData[] =
     
     EAGLContext * _context;
     
-    GLKMatrix3 _viewToComplexPlaneTransform;
+    GLKMatrix4 _viewTransform;
     GLKVector2 _juliaSeed;
     
     CGPoint _previousTranslation;
@@ -70,6 +75,7 @@ GLfloat vertexData[] =
     UITapGestureRecognizer * _doubleTapGestureRecognizer;
     
     uint _limit;
+    float _time;
     
     __weak IBOutlet UILabel *_maxIterationsLabel;
     __weak IBOutlet UISlider *_maxIterationsSlider;
@@ -77,22 +83,26 @@ GLfloat vertexData[] =
     __weak IBOutlet UISegmentedControl *_interactionSegmentedControl;
     
     __weak IBOutlet UIView* _gestureAreaView;
-    IBOutlet NSLayoutConstraint* _settingsPanelHiddenConstraint;
-    IBOutlet NSLayoutConstraint* _settingsPanelVisibleConstraint;
+    __weak IBOutlet UIView* _settingsPanelView;
+    __weak IBOutlet NSLayoutConstraint* _settingsPanelHiddenConstraint;
+    __weak IBOutlet NSLayoutConstraint* _settingsPanelVisibleConstraint;
 }
+
+- (GLKView*)glView { return (GLKView*)self.view; }
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    _settingsPanelHidden = YES;
     
     self.delegate = self;
     
     _context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
     NSAssert(_context != nil, @"Failed to create ES context");
     
-    GLKView *view = (GLKView *)self.view;
-    view.context = _context;
-    view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
-    view.contentScaleFactor = UIScreen.mainScreen.nativeScale;
+    self.glView.context = _context;
+    self.glView.drawableDepthFormat = GLKViewDrawableDepthFormat24;
+    self.glView.contentScaleFactor = UIScreen.mainScreen.nativeScale;
     
     self.preferredFramesPerSecond = 60;
     _limit = 128;
@@ -134,10 +144,45 @@ GLfloat vertexData[] =
 }
 
 - (void)didDoubleTap:(id)sender {
-    [UIView animateWithDuration:0.3 animations:^{
-        [self toggleSettingsPanel];
-        [self.view layoutIfNeeded];
-    }];
+    [self setSettingsPanelHidden:!self.settingsPanelHidden animated:YES];
+}
+
+- (void)setSettingsPanelHidden:(BOOL)settingsPanelHidden {
+    [self setSettingsPanelHidden:settingsPanelHidden animated:NO];
+}
+
+- (void)setSettingsPanelHidden:(BOOL)settingsPanelHidden animated:(BOOL)animated {
+    if (_settingsPanelHidden == settingsPanelHidden) return;
+    
+    _settingsPanelHidden = settingsPanelHidden;
+    [self.view setNeedsUpdateConstraints];
+    
+    if (animated) {
+        if (!_settingsPanelHidden) {
+            _settingsPanelView.hidden = NO;
+        }
+        [UIView animateWithDuration:0.3 animations:^{
+            [self.view updateConstraintsIfNeeded];
+            [self.view layoutIfNeeded];
+        } completion:^(BOOL finished) {
+            if (!finished) return;
+            
+            if (_settingsPanelHidden) {
+                _settingsPanelView.hidden = YES;
+            }
+        }];
+    }
+}
+
+- (void)updateViewConstraints {
+    [super updateViewConstraints];
+    _settingsPanelHiddenConstraint.active = _settingsPanelHidden;
+    _settingsPanelVisibleConstraint.active = !_settingsPanelHidden;
+}
+
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
+    [super traitCollectionDidChange:previousTraitCollection];
+    [self.view setNeedsUpdateConstraints];
 }
 
 - (BOOL)isNavigatingFreely {
@@ -163,9 +208,12 @@ GLfloat vertexData[] =
             } break;
         }
         
-        _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, rotationCenter.x * self.view.contentScaleFactor, (self.view.bounds.size.height - rotationCenter.y) * self.view.contentScaleFactor);
-        _viewToComplexPlaneTransform = GLKMatrix3RotateZ(_viewToComplexPlaneTransform, deltaRotation);
-        _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, -rotationCenter.x * self.view.contentScaleFactor, -(self.view.bounds.size.height - rotationCenter.y) * self.view.contentScaleFactor);
+        GLKVector4 windowLocation = GLKVector4Make(rotationCenter.x * self.glView.contentScaleFactor,
+                                                   self.glView.drawableHeight - rotationCenter.y * self.glView.contentScaleFactor, 0, 1);
+        GLKVector4 complexPlaneLocation = GLKMatrix4MultiplyVector4(GLKMatrix4Invert([self complexPlaneToWindowTransform], NULL), windowLocation);
+        _viewTransform = GLKMatrix4Multiply(_viewTransform, GLKMatrix4MakeTranslation(complexPlaneLocation.x, complexPlaneLocation.y, complexPlaneLocation.z));
+        _viewTransform = GLKMatrix4Multiply(_viewTransform, GLKMatrix4MakeRotation(deltaRotation, 0, 0, -1));
+        _viewTransform = GLKMatrix4Multiply(_viewTransform, GLKMatrix4MakeTranslation(-complexPlaneLocation.x, -complexPlaneLocation.y, -complexPlaneLocation.z));
         
         _previousRotation = rotation;
     }
@@ -180,18 +228,19 @@ GLfloat vertexData[] =
         switch (_pinchGestureRecognizer.state) {
             case UIGestureRecognizerStateBegan:{
                 deltaScale = 1;
-            }
-                break;
+            } break;
                 
             default:{
-                deltaScale = _previousScale / scale;
-            }
-                break;
+                deltaScale = scale / _previousScale;
+            } break;
         }
         
-        _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, scaleCenter.x * self.view.contentScaleFactor, (self.view.bounds.size.height - scaleCenter.y) * self.view.contentScaleFactor);
-        _viewToComplexPlaneTransform = GLKMatrix3Scale(_viewToComplexPlaneTransform, deltaScale, deltaScale, 1);
-        _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, -scaleCenter.x * self.view.contentScaleFactor, -(self.view.bounds.size.height - scaleCenter.y) * self.view.contentScaleFactor);
+        GLKVector4 windowLocation = GLKVector4Make(scaleCenter.x * self.glView.contentScaleFactor,
+                                                   self.glView.drawableHeight - scaleCenter.y * self.glView.contentScaleFactor, 0, 1);
+        GLKVector4 complexPlaneLocation = GLKMatrix4MultiplyVector4(GLKMatrix4Invert([self complexPlaneToWindowTransform], NULL), windowLocation);
+        _viewTransform = GLKMatrix4Multiply(_viewTransform, GLKMatrix4MakeTranslation(complexPlaneLocation.x, complexPlaneLocation.y, complexPlaneLocation.z));
+        _viewTransform = GLKMatrix4Multiply(_viewTransform, GLKMatrix4MakeScale(deltaScale, deltaScale, 1));
+        _viewTransform = GLKMatrix4Multiply(_viewTransform, GLKMatrix4MakeTranslation(-complexPlaneLocation.x, -complexPlaneLocation.y, -complexPlaneLocation.z));
         
         _previousScale = scale;
     }
@@ -205,16 +254,20 @@ GLfloat vertexData[] =
         case UIGestureRecognizerStateBegan:{
             delta = CGPointMake(0, 0);
         } break;
+            
         default:{
             delta = CGPointMake(translation.x - _previousTranslation.x, translation.y - _previousTranslation.y);
         } break;
     }
     _previousTranslation = translation;
     
+    GLKVector4 windowTranslation = GLKVector4Make(delta.x * self.glView.contentScaleFactor, -delta.y * self.glView.contentScaleFactor, 0, 0);
+    GLKVector4 complexPlaneTranslation = GLKMatrix4MultiplyVector4(GLKMatrix4Invert([self complexPlaneToWindowTransform], NULL), windowTranslation);
     if ([self isNavigatingFreely]) {
-        _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, -delta.x * self.view.contentScaleFactor, delta.y * self.view.contentScaleFactor);
+        _viewTransform = GLKMatrix4Multiply(_viewTransform, GLKMatrix4MakeTranslation(complexPlaneTranslation.x,
+                                                                                      complexPlaneTranslation.y,
+                                                                                      complexPlaneTranslation.z));
     } else {
-        GLKVector3 complexPlaneTranslation = GLKMatrix3MultiplyVector3(_viewToComplexPlaneTransform, GLKVector3Make(delta.x, -delta.y, 0));
         _juliaSeed = GLKVector2Add(_juliaSeed, GLKVector2Make(complexPlaneTranslation.x, complexPlaneTranslation.y));
     }
 }
@@ -246,16 +299,8 @@ GLfloat vertexData[] =
     
     glBindVertexArray(0);
     
-    [self resetTransformation];
-}
-
-- (void)resetTransformation {
-    _viewToComplexPlaneTransform = GLKMatrix3Identity;
-    _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, -2, 0);
-    _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, 0, -1);
-    
-    float scale = 2 / (self.view.bounds.size.height * self.view.contentScaleFactor);
-    _viewToComplexPlaneTransform = GLKMatrix3Scale(_viewToComplexPlaneTransform, scale, scale, 1);
+    _viewTransform = GLKMatrix4MakeScale(0.5, 0.5, 1);
+    _viewTransform = GLKMatrix4Multiply(_viewTransform, GLKMatrix4MakeTranslation(0.5, 0, 0));
 }
 
 - (void)tearDownGL
@@ -278,26 +323,66 @@ GLfloat vertexData[] =
     return;
 #endif
     
-    glClearColor(0.65f, 0.65f, 0.65f, 1.0f);
+    glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
+    
     glUseProgram([self isDrawingMandelbrotSet] ? _mandelbrotProgram : _juliaProgram);
+    
+    int const* uniforms = [self isDrawingMandelbrotSet] ? _mandelbrotUniforms : _juliaUniforms;
+    
+    glUniform1i(uniforms[UNIFORM_LIMIT], _limit);
+    
+    glUniformMatrix4fv(uniforms[UNIFORM_SCREEN_TO_COMPLEX_PLANE_TRANSFORM], 1, GL_FALSE, GLKMatrix4Invert([self complexPlaneToWindowTransform], NULL).m);
+    glUniform1f(uniforms[UNIFORM_TIME], _time);
+    if(![self isDrawingMandelbrotSet]) {
+        glUniform2f(uniforms[UNIFORM_JULIA_SEED], _juliaSeed.x, _juliaSeed.y);
+    }
+    
+    CGRect viewport = [self viewport];
+    glViewport((int)viewport.origin.x, (int)viewport.origin.y, (int)viewport.size.width, (int)viewport.size.height);
     glBindVertexArray(_vertexArray);
     glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+- (GLKMatrix4)complexPlaneToWindowTransform {
+    CGRect viewport = [self viewport];
+    
+    GLKMatrix4 viewportTransform = GLKMatrix4Identity;
+    viewportTransform = GLKMatrix4Multiply(GLKMatrix4MakeTranslation(1, 1, 0), viewportTransform);
+    viewportTransform = GLKMatrix4Multiply(GLKMatrix4MakeScale(viewport.size.width / 2.0, viewport.size.height / 2.0, 1), viewportTransform);
+    viewportTransform = GLKMatrix4Multiply(GLKMatrix4MakeTranslation(viewport.origin.x, viewport.origin.y, 0), viewportTransform);
+    
+    CGFloat aspect = viewport.size.width / viewport.size.height;
+    CGFloat top = 1;
+    CGFloat bottom = -1;
+    CGFloat left = -1 * aspect;
+    CGFloat right = 1 * aspect;
+    
+    GLKMatrix4 projectionTransform = GLKMatrix4Identity;
+    projectionTransform = GLKMatrix4Multiply(GLKMatrix4MakeTranslation(-left, -bottom, 0), projectionTransform);
+    projectionTransform = GLKMatrix4Multiply(GLKMatrix4MakeScale(2.0 / (right - left), 2.0 / (top - bottom), 1), projectionTransform);
+    projectionTransform = GLKMatrix4Multiply(GLKMatrix4MakeTranslation(-1, -1, 0), projectionTransform);
+    
+    GLKMatrix4 eyeToWindowTransform = GLKMatrix4Multiply(viewportTransform, projectionTransform);
+    GLKMatrix4 complexPlaneToWindowTransform = GLKMatrix4Multiply(eyeToWindowTransform, _viewTransform);
+    
+    return complexPlaneToWindowTransform;
+}
+
+- (CGRect)viewport {
+    CGSize presentationSize = (self.glView.layer.presentationLayer ?: self.glView.layer).bounds.size;
+    CGFloat presentationScale = fmin(self.glView.drawableWidth / presentationSize.width,
+                                     self.glView.drawableHeight / presentationSize.height);
+    CGSize viewportSize = CGSizeMake(presentationSize.width * presentationScale, presentationSize.height * presentationScale);
+    return CGRectMake((self.glView.drawableWidth - viewportSize.width) / 2, (self.glView.drawableHeight - viewportSize.height) / 2,
+                      viewportSize.width, viewportSize.height);
 }
 
 - (void)glkViewControllerUpdate:(GLKViewController *)controller {
 #if TARGET_OS_SIMULATOR
     return;
 #endif
-    
-    int const* uniforms = [self isDrawingMandelbrotSet] ? _mandelbrotUniforms : _juliaUniforms;
-    
-    glUniform1i(uniforms[UNIFORM_LIMIT], _limit);
-    glUniformMatrix3fv(uniforms[UNIFORM_SCREEN_TO_COMPLEX_PLANE_TRANSFORM], 1, GL_FALSE, _viewToComplexPlaneTransform.m);
-    glUniform1f(uniforms[UNIFORM_TIME], (float)controller.timeSinceFirstResume);
-    if(![self isDrawingMandelbrotSet]) {
-        glUniform2f(uniforms[UNIFORM_JULIA_SEED], _juliaSeed.x, _juliaSeed.y);
-    }
+    _time = controller.timeSinceFirstResume;
 }
 
 - (void)loadShaders {
@@ -330,20 +415,9 @@ GLfloat vertexData[] =
     _juliaUniforms[UNIFORM_LIMIT] = glGetUniformLocation(_juliaProgram, "limit");
 }
 
-
 - (IBAction)maxIterationsSliderValueChanged:(UISlider*)slider {
     _limit = (int)slider.value;
     [self refreshMaxIterations];
-}
-
-- (void)toggleSettingsPanel {
-    if (_settingsPanelHiddenConstraint.active) {
-        _settingsPanelHiddenConstraint.active = NO;
-        _settingsPanelVisibleConstraint.active = YES;
-    } else {
-        _settingsPanelVisibleConstraint.active = NO;
-        _settingsPanelHiddenConstraint.active = YES;
-    }
 }
 
 - (IBAction)modeSegmentedControlValueChanged:(id)sender {
