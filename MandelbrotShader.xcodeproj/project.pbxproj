@@ -41,7 +41,6 @@
 		E2CE822E187603BE00914531 /* JuliaShader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = E2CE822C1876037C00914531 /* JuliaShader.fsh */; };
 		E2E0F3661F812C1F0022722B /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E2E0F3651F812C1F0022722B /* Main.storyboard */; };
 		E2E4622C1875ADD200CA2DB3 /* ShaderHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = E2E4622B1875ADD200CA2DB3 /* ShaderHelper.m */; };
-		E2E4622F1875B57F00CA2DB3 /* GLKHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = E2E4622E1875B57F00CA2DB3 /* GLKHelper.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -95,8 +94,6 @@
 		E2E0F3651F812C1F0022722B /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
 		E2E4622A1875ADD200CA2DB3 /* ShaderHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ShaderHelper.h; sourceTree = "<group>"; };
 		E2E4622B1875ADD200CA2DB3 /* ShaderHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ShaderHelper.m; sourceTree = "<group>"; };
-		E2E4622D1875B57F00CA2DB3 /* GLKHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLKHelper.h; sourceTree = "<group>"; };
-		E2E4622E1875B57F00CA2DB3 /* GLKHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GLKHelper.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -192,8 +189,6 @@
 				E2AFD69C1874814300B04D8C /* Supporting Files */,
 				E2E4622A1875ADD200CA2DB3 /* ShaderHelper.h */,
 				E2E4622B1875ADD200CA2DB3 /* ShaderHelper.m */,
-				E2E4622D1875B57F00CA2DB3 /* GLKHelper.h */,
-				E2E4622E1875B57F00CA2DB3 /* GLKHelper.m */,
 				6752E4B81BFFC8B40098DF3D /* Launch Screen.storyboard */,
 				E2E0F3651F812C1F0022722B /* Main.storyboard */,
 			);
@@ -347,7 +342,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				E2E4622C1875ADD200CA2DB3 /* ShaderHelper.m in Sources */,
-				E2E4622F1875B57F00CA2DB3 /* GLKHelper.m in Sources */,
 				E2AFD6B01874814300B04D8C /* ViewController.m in Sources */,
 				E2AFD6A61874814300B04D8C /* AppDelegate.m in Sources */,
 				E2AFD6A21874814300B04D8C /* main.m in Sources */,

@@ -7,7 +7,6 @@
 //
 
 #import "ViewController.h"
-#import "GLKHelper.h"
 #import "ShaderHelper.h"
 #import <OpenGLES/ES3/gl.h>
 
