@@ -31,7 +31,5 @@ void main()
     if(i == limit) color = 1.;
     else color = ((float(i) + 1. - log(log(length(z))) * M_1_LOG_2)) / float(limit);
     
-    color = color * 2. * M_PI + time;
-    
-    gl_FragColor = vec4(sin(color * 0.3),sin(color * 2.),sin(color * 3.),0) * 0.5 + vec4(0.5,0.5,0.5,1.);
+    gl_FragColor = vec4(color, color, color, 1.);
 }

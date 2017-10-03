@@ -32,8 +32,6 @@ typedef enum {
     kJuliaState
 } State;
 
-int uniforms[NUM_UNIFORMS];
-
 GLfloat vertexData[] =
 {
     -1,  1, 0, 1,
@@ -46,7 +44,10 @@ GLfloat vertexData[] =
 };
 
 @implementation ViewController {
+    int _mandelbrotUniforms[NUM_UNIFORMS];
     GLuint _mandelbrotProgram;
+    
+    int _juliaUniforms[NUM_UNIFORMS];
     GLuint _juliaProgram;
     
     GLuint _vertexArray;
@@ -57,24 +58,31 @@ GLfloat vertexData[] =
     GLKMatrix3 _viewToComplexPlaneTransform;
     GLKVector2 _juliaSeed;
     
+    CGPoint _previousTranslation;
     UIPanGestureRecognizer * _panGestureRecognizer;
+    
+    CGFloat _previousScale;
     UIPinchGestureRecognizer * _pinchGestureRecognizer;
+    
+    CGFloat _previousRotation;
     UIRotationGestureRecognizer * _rotationGestureRecognizer;
+    
     UITapGestureRecognizer * _doubleTapGestureRecognizer;
     
-    State _state;
     uint _limit;
     
     __weak IBOutlet UILabel *_maxIterationsLabel;
     __weak IBOutlet UISlider *_maxIterationsSlider;
+    __weak IBOutlet UISegmentedControl *_modeSegmentedControl;
+    __weak IBOutlet UISegmentedControl *_interactionSegmentedControl;
+    
     __weak IBOutlet UIView* _gestureAreaView;
+    IBOutlet NSLayoutConstraint* _settingsPanelHiddenConstraint;
+    IBOutlet NSLayoutConstraint* _settingsPanelVisibleConstraint;
 }
 
-- (void)viewDidLoad
-{
+- (void)viewDidLoad {
     [super viewDidLoad];
-    
-    _state = kMandelbrotState;
     
     self.delegate = self;
     
@@ -107,6 +115,8 @@ GLfloat vertexData[] =
     [_gestureAreaView addGestureRecognizer:_doubleTapGestureRecognizer];
     
     [self setupGL];
+    
+    [self refreshSettingsPanel];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -119,100 +129,97 @@ GLfloat vertexData[] =
     _maxIterationsSlider.value = _limit;
 }
 
--(BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer{
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
     return YES;
 }
 
--(void)didDoubleTap:(id)sender{
-    if(_state == kMandelbrotState){
-        [self prepareJuliaProgram];
+- (void)didDoubleTap:(id)sender {
+    [UIView animateWithDuration:0.3 animations:^{
+        [self toggleSettingsPanel];
+        [self.view layoutIfNeeded];
+    }];
+}
+
+- (BOOL)isNavigatingFreely {
+    return _interactionSegmentedControl.selectedSegmentIndex == 0;
+}
+
+- (BOOL)isDrawingMandelbrotSet {
+    return _modeSegmentedControl.selectedSegmentIndex == 0;
+}
+
+- (void)didRotate:(id)sender {
+    if ([self isNavigatingFreely]) {
+        CGPoint rotationCenter = [_rotationGestureRecognizer locationInView:self.view];
+        CGFloat rotation = _rotationGestureRecognizer.rotation;
+        CGFloat deltaRotation;
+        switch (_rotationGestureRecognizer.state) {
+            case UIGestureRecognizerStateBegan:{
+                deltaRotation = 0;
+            } break;
+                
+            default:{
+                deltaRotation = rotation - _previousRotation;
+            } break;
+        }
         
-        CGPoint position = [_doubleTapGestureRecognizer locationInView:self.view];
-        GLKVector3 positionVector = GLKVector3Make(position.x * self.view.contentScaleFactor, (self.view.bounds.size.height - position.y) * self.view.contentScaleFactor, 1);
-        GLKVector3 juliaSeed = GLKMatrix3MultiplyVector3(_viewToComplexPlaneTransform, positionVector);
-        _juliaSeed = GLKVector2Make(juliaSeed.x, juliaSeed.y);
+        _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, rotationCenter.x * self.view.contentScaleFactor, (self.view.bounds.size.height - rotationCenter.y) * self.view.contentScaleFactor);
+        _viewToComplexPlaneTransform = GLKMatrix3RotateZ(_viewToComplexPlaneTransform, deltaRotation);
+        _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, -rotationCenter.x * self.view.contentScaleFactor, -(self.view.bounds.size.height - rotationCenter.y) * self.view.contentScaleFactor);
         
-        _state = kJuliaState;
-    }else if(_state == kJuliaState){
-        [self prepareMandelbrotProgram];
-        _state = kMandelbrotState;
+        _previousRotation = rotation;
     }
 }
 
--(void)didRotate:(id)sender{
-    static CGFloat previousRotation;
-    
-    CGPoint rotationCenter = [_rotationGestureRecognizer locationInView:self.view];
-    CGFloat rotation = _rotationGestureRecognizer.rotation;
-    CGFloat deltaRotation;
-    switch (_rotationGestureRecognizer.state) {
-        case UIGestureRecognizerStateBegan:{
-            deltaRotation = 0;
+- (void)didPinch:(id)sender {
+    if ([self isNavigatingFreely]) {
+        CGPoint scaleCenter = [_pinchGestureRecognizer locationInView:self.view];
+        CGFloat scale = _pinchGestureRecognizer.scale;
+        
+        CGFloat deltaScale;
+        switch (_pinchGestureRecognizer.state) {
+            case UIGestureRecognizerStateBegan:{
+                deltaScale = 1;
+            }
+                break;
+                
+            default:{
+                deltaScale = _previousScale / scale;
+            }
+                break;
         }
-            break;
-            
-        default:{
-            deltaRotation = rotation - previousRotation;
-        }
-            break;
+        
+        _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, scaleCenter.x * self.view.contentScaleFactor, (self.view.bounds.size.height - scaleCenter.y) * self.view.contentScaleFactor);
+        _viewToComplexPlaneTransform = GLKMatrix3Scale(_viewToComplexPlaneTransform, deltaScale, deltaScale, 1);
+        _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, -scaleCenter.x * self.view.contentScaleFactor, -(self.view.bounds.size.height - scaleCenter.y) * self.view.contentScaleFactor);
+        
+        _previousScale = scale;
     }
-    
-    _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, rotationCenter.x * self.view.contentScaleFactor, (self.view.bounds.size.height - rotationCenter.y) * self.view.contentScaleFactor);
-    _viewToComplexPlaneTransform = GLKMatrix3RotateZ(_viewToComplexPlaneTransform, deltaRotation);
-    _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, -rotationCenter.x * self.view.contentScaleFactor, -(self.view.bounds.size.height - rotationCenter.y) * self.view.contentScaleFactor);
-    
-    previousRotation = rotation;
 }
 
--(void)didPinch:(id)sender{
-    static CGFloat previousScale;
-    
-    CGPoint scaleCenter = [_pinchGestureRecognizer locationInView:self.view];
-    CGFloat scale = _pinchGestureRecognizer.scale;
-    
-    CGFloat deltaScale;
-    switch (_pinchGestureRecognizer.state) {
-        case UIGestureRecognizerStateBegan:{
-            deltaScale = 1;
-        }
-            break;
-            
-        default:{
-            deltaScale = previousScale / scale;
-        }
-            break;
-    }
-    
-    _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, scaleCenter.x * self.view.contentScaleFactor, (self.view.bounds.size.height - scaleCenter.y) * self.view.contentScaleFactor);
-    _viewToComplexPlaneTransform = GLKMatrix3Scale(_viewToComplexPlaneTransform, deltaScale, deltaScale, 1);
-    _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, -scaleCenter.x * self.view.contentScaleFactor, -(self.view.bounds.size.height - scaleCenter.y) * self.view.contentScaleFactor);
-    
-    previousScale = scale;
-}
-
--(void)didPan:(id)sender{
-    static CGPoint previousTranslation;
-    
+- (void)didPan:(id)sender {
     CGPoint translation = [_panGestureRecognizer translationInView:self.view];
     
     CGPoint delta;
     switch(_panGestureRecognizer.state){
         case UIGestureRecognizerStateBegan:{
             delta = CGPointMake(0, 0);
-        }
-            break;
+        } break;
         default:{
-            delta = CGPointMake(translation.x - previousTranslation.x, translation.y - previousTranslation.y);
-        }
+            delta = CGPointMake(translation.x - _previousTranslation.x, translation.y - _previousTranslation.y);
+        } break;
     }
+    _previousTranslation = translation;
     
-    _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, -delta.x * self.view.contentScaleFactor, delta.y * self.view.contentScaleFactor);
-    
-    previousTranslation = translation;
+    if ([self isNavigatingFreely]) {
+        _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, -delta.x * self.view.contentScaleFactor, delta.y * self.view.contentScaleFactor);
+    } else {
+        GLKVector3 complexPlaneTranslation = GLKMatrix3MultiplyVector3(_viewToComplexPlaneTransform, GLKVector3Make(delta.x, -delta.y, 0));
+        _juliaSeed = GLKVector2Add(_juliaSeed, GLKVector2Make(complexPlaneTranslation.x, complexPlaneTranslation.y));
+    }
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [self tearDownGL];
     
     if ([EAGLContext currentContext] == _context) {
@@ -220,8 +227,7 @@ GLfloat vertexData[] =
     }
 }
 
-- (void)setupGL
-{
+- (void)setupGL {
     [EAGLContext setCurrentContext:_context];
     
     [self loadShaders];
@@ -241,10 +247,9 @@ GLfloat vertexData[] =
     glBindVertexArray(0);
     
     [self resetTransformation];
-    [self prepareMandelbrotProgram];
 }
 
--(void)resetTransformation{
+- (void)resetTransformation {
     _viewToComplexPlaneTransform = GLKMatrix3Identity;
     _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, -2, 0);
     _viewToComplexPlaneTransform = GLKMatrix3Translate(_viewToComplexPlaneTransform, 0, -1);
@@ -269,33 +274,33 @@ GLfloat vertexData[] =
 
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
+#if TARGET_OS_SIMULATOR
+    return;
+#endif
+    
     glClearColor(0.65f, 0.65f, 0.65f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-    
-    if(_state == kMandelbrotState){
-        glUseProgram(_mandelbrotProgram);
-    }else if(_state == kJuliaState){
-        glUseProgram(_juliaProgram);
-    }else{
-        NSAssert(NO, @"Invalid state: '%d'", (int)_state);
-    }
-    
+    glUseProgram([self isDrawingMandelbrotSet] ? _mandelbrotProgram : _juliaProgram);
     glBindVertexArray(_vertexArray);
-    
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
--(void)glkViewControllerUpdate:(GLKViewController *)controller{
+- (void)glkViewControllerUpdate:(GLKViewController *)controller {
+#if TARGET_OS_SIMULATOR
+    return;
+#endif
+    
+    int const* uniforms = [self isDrawingMandelbrotSet] ? _mandelbrotUniforms : _juliaUniforms;
+    
     glUniform1i(uniforms[UNIFORM_LIMIT], _limit);
     glUniformMatrix3fv(uniforms[UNIFORM_SCREEN_TO_COMPLEX_PLANE_TRANSFORM], 1, GL_FALSE, _viewToComplexPlaneTransform.m);
     glUniform1f(uniforms[UNIFORM_TIME], (float)controller.timeSinceFirstResume);
-    if(_state == kJuliaState){
+    if(![self isDrawingMandelbrotSet]) {
         glUniform2f(uniforms[UNIFORM_JULIA_SEED], _juliaSeed.x, _juliaSeed.y);
     }
 }
 
-- (void)loadShaders
-{
+- (void)loadShaders {
     _mandelbrotProgram = glCreateProgram();
     _juliaProgram = glCreateProgram();
     
@@ -314,24 +319,43 @@ GLfloat vertexData[] =
     
     [[ShaderHelper shaderHelper] linkProgram:_mandelbrotProgram];
     [[ShaderHelper shaderHelper] linkProgram:_juliaProgram];
+    
+    _mandelbrotUniforms[UNIFORM_SCREEN_TO_COMPLEX_PLANE_TRANSFORM] = glGetUniformLocation(_mandelbrotProgram, "screenToComplexPlaneTransform");
+    _mandelbrotUniforms[UNIFORM_TIME] = glGetUniformLocation(_mandelbrotProgram, "time");
+    _mandelbrotUniforms[UNIFORM_LIMIT] = glGetUniformLocation(_mandelbrotProgram, "limit");
+    
+    _juliaUniforms[UNIFORM_SCREEN_TO_COMPLEX_PLANE_TRANSFORM] = glGetUniformLocation(_juliaProgram, "screenToComplexPlaneTransform");
+    _juliaUniforms[UNIFORM_TIME] = glGetUniformLocation(_juliaProgram, "time");
+    _juliaUniforms[UNIFORM_JULIA_SEED] = glGetUniformLocation(_juliaProgram, "juliaSeed");
+    _juliaUniforms[UNIFORM_LIMIT] = glGetUniformLocation(_juliaProgram, "limit");
 }
 
--(void)prepareMandelbrotProgram{
-    uniforms[UNIFORM_SCREEN_TO_COMPLEX_PLANE_TRANSFORM] = glGetUniformLocation(_mandelbrotProgram, "screenToComplexPlaneTransform");
-    uniforms[UNIFORM_TIME] = glGetUniformLocation(_mandelbrotProgram, "time");
-    uniforms[UNIFORM_LIMIT] = glGetUniformLocation(_mandelbrotProgram, "limit");
-}
-
--(void)prepareJuliaProgram{
-    uniforms[UNIFORM_SCREEN_TO_COMPLEX_PLANE_TRANSFORM] = glGetUniformLocation(_juliaProgram, "screenToComplexPlaneTransform");
-    uniforms[UNIFORM_TIME] = glGetUniformLocation(_juliaProgram, "time");
-    uniforms[UNIFORM_JULIA_SEED] = glGetUniformLocation(_juliaProgram, "juliaSeed");
-    uniforms[UNIFORM_LIMIT] = glGetUniformLocation(_juliaProgram, "limit");
-}
 
 - (IBAction)maxIterationsSliderValueChanged:(UISlider*)slider {
     _limit = (int)slider.value;
     [self refreshMaxIterations];
+}
+
+- (void)toggleSettingsPanel {
+    if (_settingsPanelHiddenConstraint.active) {
+        _settingsPanelHiddenConstraint.active = NO;
+        _settingsPanelVisibleConstraint.active = YES;
+    } else {
+        _settingsPanelVisibleConstraint.active = NO;
+        _settingsPanelHiddenConstraint.active = YES;
+    }
+}
+
+- (IBAction)modeSegmentedControlValueChanged:(id)sender {
+    [self refreshSettingsPanel];
+}
+
+- (IBAction)interactionSegmentedControlValueChanged:(id)sender {
+    [self refreshSettingsPanel];
+}
+
+- (void)refreshSettingsPanel {
+    _interactionSegmentedControl.enabled = ![self isDrawingMandelbrotSet];
 }
 
 @end
